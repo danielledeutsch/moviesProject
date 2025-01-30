@@ -1,0 +1,11 @@
+C:\Users\Danielle\source\repos\moviesLibrary\bin\Debug\net8.0\moviesLibrary.deps.json
+C:\Users\Danielle\source\repos\moviesLibrary\bin\Debug\net8.0\moviesLibrary.dll
+C:\Users\Danielle\source\repos\moviesLibrary\bin\Debug\net8.0\moviesLibrary.pdb
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\moviesLibrary.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\moviesLibrary.AssemblyInfoInputs.cache
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\moviesLibrary.AssemblyInfo.cs
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\moviesLibrary.csproj.CoreCompileInputs.cache
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\moviesLibrary.dll
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\refint\moviesLibrary.dll
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\moviesLibrary.pdb
+C:\Users\Danielle\source\repos\moviesLibrary\obj\Debug\net8.0\ref\moviesLibrary.dll
