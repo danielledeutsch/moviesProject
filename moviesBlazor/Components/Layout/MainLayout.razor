@@ -1,0 +1,33 @@
+﻿@inherits LayoutComponentBase
+@using moviesBlazor.BlazorModels;
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Blazor App</PageTitle>
+
+<!-- Plain Navbar Code -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <div class="navbar-nav">
+            
+            @if (UserService.LoggedInUser != null)
+             
+            {
+                <!-- Show Home and other links if logged in -->
+                <a class="nav-link" href="/Home">Home</a>
+                <a class="nav-link" href="/test-design">test</a>
+               
+            }
+            else
+            {
+                <!-- Show Login link if not logged in -->
+                <a class="nav-link" href="/">Login</a>
+            }
+        </div>
+    </div>
+</nav>
+
+<!-- Body Content -->
+<main class="p-4">
+    @Body
+</main>

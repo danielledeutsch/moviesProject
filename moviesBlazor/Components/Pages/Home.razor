@@ -1,0 +1,307 @@
+﻿@page "/"
+@inject HttpClient Http
+@using moviesBlazor.BlazorModels
+@inject UserService UserService;
+@inject NavigationManager Navigation
+@using moviesLibrary
+
+@if (UserService.LoggedInUser != null)
+{
+    <h3>
+
+        Hello @((UserService.LoggedInUser?.Name ?? "Guest,"))! Welcome!
+    </h3>
+}
+else
+{
+    <h3>
+        Welcome, please login or SignUp <button class="linkButton" @onclick="NavLogin">login</button>
+    </h3>
+}
+
+<!-- The movie buttons -->
+<div class="movie-container">
+    @foreach (var movie in movies)
+    {
+        <button class="movie-button" @onclick="() => OpenMovieDetails(movie)">
+            <img src="@movie.PosterURL" alt="@movie.Title" class="movie-poster" />
+            <p>@movie.Title</p>
+        </button>
+    }
+</div>
+@if (userclick ==1)
+{
+       <div class="modal">
+        <div class="modal-content">
+            <h1>please log in to continue</h1>
+
+            </div>
+            </div>
+}
+<!-- Movie Details Modal -->
+@if (selectedMovie != null)
+{
+    <div class="modal">
+        <div class="modal-content">
+           
+           <span class="close" @onclick="CloseModal">&times;</span>
+            <button class="go-back" @onclick="async () => await GoBack()">← Go Back</button>
+            <div class="modal-body">
+                <img src="@selectedMovie.PosterURL" alt="@selectedMovie.Title" class="modal-poster" />
+                <div class="movie-details">
+                    <h2>@selectedMovie.Title</h2>
+                    <p>@selectedMovie.Description</p>
+                    <p><strong>Release Date:</strong> @(selectedMovie.ReleaseDate.HasValue ? selectedMovie.ReleaseDate.Value.ToString("dd/MM/yyyy") : "Unknown")</p>
+                    <p><strong>Director:</strong></p>
+                    <button class="director-button" @onclick="() => OpenDirectorMovies(selectedMovie.Director)">
+                        @selectedMovie.Director
+                    </button>
+                    <!-- Main Cast Section -->
+                    @if (movieActors != null && movieActors.Any())
+                    {
+                        <h3>Top Billed Cast</h3>
+                        <div class="actors-container">
+                            @foreach (var actor in movieActors)
+                            {
+                                <div class="actor" @onclick="() => OpenActorDetails(actor)">
+                                    <img src="@actor.PictureURL" alt="@actor.Name" class="actor-picture" />
+                                    <p>@actor.Name</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (isLoadingActors)
+                    {
+                        <p>Loading actors...</p>
+                    }
+                    else
+                    {
+                        <p>No cast information available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Director's Movies Modal -->
+ @if (directorMovies != null)
+ {
+     <div class="modal">
+        <div class="modal-content">
+           <span class="close" @onclick="CloseDirectorModal">&times;</span>
+            <button class="go-back" @onclick="async () => await GoBack()">← Go Back</button>
+
+            <div class="modal-body">
+                <h2>Movies Directed by @selectedDirector</h2>
+
+
+            @if (directorMovies != null && directorMovies.Any())
+                {
+                    <div class="moviemini-container">
+                        @foreach (var movie in directorMovies)
+                        {
+                        <button class="movie-button" @onclick="() => OpenMovieDetails(movie)">
+                                <img src="@movie.PosterURL" alt="@movie.Title" class="movie-miniposter" />
+                                <p>@movie.Title</p>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+ }
+
+
+<!-- Actor Details Modal -->
+@if (selectedActor != null)
+{
+    <div class="modal">
+        <div class="modal-content">
+          
+         <span class="close" @onclick="CloseActorModal">&times;</span>
+            <button class="go-back" @onclick="async () => await GoBack()">← Go Back</button>
+
+          
+            <div class="modal-body"> 
+                <img src="@selectedActor.PictureURL" alt="@selectedActor.Name" class="modal-poster" />
+                <div class="movie-details">
+                    <h2>@selectedActor.Name</h2>
+                    <h3>Movies:</h3>
+                    @if (actorMovies != null && actorMovies.Any())
+                    {
+                        <div class="moviemini-container">
+                            @foreach (var movie in actorMovies)
+                            {
+                                <button class="movie-button" @onclick="async () => await OpenMovieDetails(movie)">
+                                    <img src="@movie.PosterURL" alt="@movie.Title" class="movie-miniposter" />
+                                    <p>@movie.Title</p>
+                                </button>
+                            }
+                        </div>
+                    }
+                    else if (isLoadingActors)
+                    {
+                        <p>Loading actors...</p>
+                    }
+                    else
+                    {
+                        <p>No cast information available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+          </div>    
+}
+
+
+@code {
+    private List<Movie> movies = new List<Movie>();
+    private Movie? selectedMovie;
+    private Stack<(string ModalType, object Data)> modalHistory = new Stack<(string, object)>();
+    private Actor? selectedActor;
+    private List<Actor>? movieActors = null; 
+    private List<Movie>? actorMovies = null;
+    private bool isLoadingActors = false;
+    private bool isLoadingActorMovies = false;
+    private string selectedDirector = string.Empty;
+    private List<Movie>? directorMovies = null;
+    private int userclick = 0;
+
+    //get movies on the screen
+    protected override async Task OnInitializedAsync()
+    {
+        movies = await Http.GetFromJsonAsync<List<Movie>>("https://localhost:7169/api/Movies");
+    }
+
+    //open director modal box
+    private async Task OpenDirectorMovies(string directorName)
+    {
+
+        directorMovies = null;
+        selectedDirector = directorName;
+        directorMovies = null;
+        modalHistory.Push(("director", directorName));
+        try
+        {
+            directorMovies = await Http.GetFromJsonAsync<List<Movie>>($"https://localhost:7169/api/Movies/director/{directorName}/movies");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching director's movies: {ex.Message}");
+        }
+    }
+    //close the director modal box
+    private void CloseDirectorModal()
+    {
+        selectedActor = null;
+        selectedMovie = null;
+        directorMovies = null;
+        modalHistory.Clear();
+    }
+
+    //open movie modal box
+    private async Task OpenMovieDetails(Movie movie)
+    {
+        if (UserService.LoggedInUser == null)
+        {
+            userclick = 1;
+        }
+        else
+        {
+            selectedActor = null;
+            directorMovies = null;
+            selectedMovie = null;
+            selectedMovie = movie;
+            modalHistory.Push(("movie", selectedMovie));
+            isLoadingActors = true;
+
+            try
+            {
+                movieActors = await Http.GetFromJsonAsync<List<Actor>>($"https://localhost:7169/api/Actors/movie/{selectedMovie.MovieId}/actors");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching actors: {ex.Message}");
+            }
+            finally
+            {
+                isLoadingActors = false;
+            }
+        }
+    }
+
+    //open actor profile modal
+    private async Task OpenActorDetails(Actor actor)
+    {
+
+        selectedActor = null;
+        selectedActor = actor;
+        actorMovies = null;
+        modalHistory.Push(("actor", selectedActor));
+        isLoadingActorMovies = true;
+
+        try
+        {
+            actorMovies = await Http.GetFromJsonAsync<List<Movie>>($"https://localhost:7169/api/Actors/{actor.Id}/movies");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching movies: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingActorMovies = false;
+        }
+    }
+
+    //close movie modal box
+    private void CloseModal()
+    {
+        modalHistory.Clear();
+        selectedMovie = null;
+        movieActors = null;
+        selectedActor = null;
+    }
+
+    //close actor modal box
+    private void CloseActorModal()
+    {
+        selectedMovie = null;
+        selectedActor = null;
+        actorMovies = null;
+    }
+    private void NavLogin()
+    {
+        Navigation.NavigateTo("/login");
+    }
+    
+    //go back function
+    private async Task GoBack()
+    {
+        modalHistory.Pop();
+        if (modalHistory.Count > 0)
+        {
+            
+            var previousModal = modalHistory.Pop();
+
+            switch (previousModal.ModalType)
+            {
+                case "movie":
+                    await OpenMovieDetails((Movie)previousModal.Data);
+                    break;
+
+                case "actor":
+                    await OpenActorDetails((Actor)previousModal.Data);
+                    break;
+
+                case "director":
+                    await OpenDirectorMovies((string)previousModal.Data);
+                    break;
+            }
+        }
+    }
+
+
+}

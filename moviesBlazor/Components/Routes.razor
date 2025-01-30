@@ -1,0 +1,21 @@
+﻿<Router AppAssembly="typeof(Program).Assembly"> 
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <RedirectToMovies />
+    </NotFound>
+</Router>
+
+@code {
+    private class RedirectToMovies : ComponentBase
+    {
+        [Inject] private NavigationManager NavigationManager { get; set; }
+
+        protected override void OnInitialized()
+        {
+            NavigationManager.NavigateTo("/movies");
+        }
+    }
+}

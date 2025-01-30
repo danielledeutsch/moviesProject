@@ -1,0 +1,127 @@
+﻿@page "/login";
+@using moviesLibrary
+@inject HttpClient HttpClient
+@using moviesBlazor.BlazorModels
+@inject UserService UserService
+@inject NavigationManager NavigationManager
+
+<InputText @bind-Value="Email" Placeholder="Email" />
+<InputText @bind-Value="Password" Placeholder="Password" />
+<button @onclick="LogIn">Log In</button>
+<button @onclick="OpenSignUpModal">Sign Up As New User</button>
+@if (IsSignUpModalVisible)
+{
+    <div class="modal show d-block">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign Up</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div> <div class="modal-body">
+                    <InputText @bind-Value="registerEmail" Placeholder="Email" />
+                    <InputText @bind-Value="registerPassword" Placeholder="Password" />
+                    <InputText @bind-Value="registerName" Placeholder="Name" />
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                    <button class="btn btn-primary" @onclick="RegisterUser">Sign Up</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+<style>
+    body {
+        
+        background-size: cover;
+        font-family: 'Courier New', Courier, monospace;
+    }
+</style>
+@code {
+    private string Email;
+    private string Password;
+    private string registerEmail;
+    private string registerPassword;
+    private string registerName;
+    private UserRegisterModel UserRegister = new();
+
+    private bool IsSignUpModalVisible = false;
+    private async Task LogIn()
+    {
+        try
+        {
+            // Create the login model
+            var loginModel = new UserLoginModel
+                {
+                    Email = Email,
+                    Password = Password
+                };
+
+            // Send a POST request with the login data
+            var response = await HttpClient.PostAsJsonAsync("https://localhost:7169/api/User/login", loginModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // On successful login, get the user object (excluding password)
+                var user = await response.Content.ReadFromJsonAsync<User>();
+
+                // Store the logged-in user
+                UserService.LoggedInUser = user;
+
+                // Redirect to the Home page
+                NavigationManager.NavigateTo("/Home");
+            }
+            else
+            {
+                // Handle login failure (invalid credentials)
+                Console.WriteLine("Login failed: " + response.ReasonPhrase);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle network or other errors
+            Console.WriteLine("An error occurred during login: " + ex.Message);
+        }
+    }
+
+    private void OpenSignUpModal()
+    {
+        IsSignUpModalVisible = true;
+    }
+    private async Task RegisterUser()
+    {
+        try
+        {
+            UserRegister.Email = registerEmail;
+            UserRegister.Password = registerPassword;
+            UserRegister.Name = registerName;
+            UserRegister.Role = 0;
+            var response = await HttpClient.PostAsJsonAsync("https://localhost:7169/api/User/register", UserRegister);
+            if (response.IsSuccessStatusCode)
+            {
+                // Notify parent component of success
+                OnSignUpSuccess();
+            }
+            else
+            {
+                Console.WriteLine("Sign-up failed: " + response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during sign-up: {ex.Message}");
+        }
+    }
+
+    private void OnSignUpSuccess()
+    {
+        IsSignUpModalVisible = false;
+        Console.WriteLine("Sign up successful. Please log in.");
+    }
+    private async Task CloseModal()
+    {
+        IsSignUpModalVisible = false;
+    }
+}
